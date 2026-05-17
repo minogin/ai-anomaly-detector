@@ -1,9 +1,9 @@
-package com.minogin.anomaly.util
+package com.minogin.anomaly.internal.util
 
 import java.util.concurrent.locks.*
 import kotlin.concurrent.*
 
-class ConcurrentList<T> {
+internal class ConcurrentList<T> {
     private val lock = ReentrantLock()
     private val list = mutableListOf<T>()
 

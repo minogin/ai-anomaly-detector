@@ -1,25 +1,36 @@
 package com.minogin.anomaly.api
 
-import com.minogin.anomaly.common.*
-import com.minogin.anomaly.comparator.*
-import com.minogin.anomaly.comparator.model.*
-import com.minogin.anomaly.tracer.*
+import com.minogin.anomaly.internal.analyzer.*
+import com.minogin.anomaly.internal.analyzer.model.*
+import com.minogin.anomaly.internal.common.model.*
+import com.minogin.anomaly.internal.profiler.*
+import com.minogin.anomaly.internal.store.*
+import com.minogin.anomaly.internal.tracer.*
+import kotlin.io.path.*
 
 class AnomalyDetector(
-    private val basePath: String,
-    private val currentVersion: String,
-    private val referenceVersion: String,
+    basePath: String,
+    currentVersion: String,
+    referenceVersion: String,
 ) {
-    private val serializer = Serializer(basePath)
+    init {
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                flush()
+            }
+        )
+    }
 
-    private val sampler = Sampler(
-        version = currentVersion,
-        serializer = serializer
-    )
+    private val currentVersion = Version(currentVersion)
+    private val referenceVersion = Version(referenceVersion)
 
-    private val diffReporter = DiffReporter(
-        serializer = serializer
-    )
+    private val store = Store(Path(basePath))
+
+    private val tracer = Tracer()
+
+    private val profiler = Profiler()
+
+    private val analyzer = Analyzer()
 
     fun checkpoint(
         step: String,
@@ -27,33 +38,48 @@ class AnomalyDetector(
         output: String,
         nextStep: String? = null
     ) {
-        sampler.checkpoint(
-            step = step,
+        tracer.checkpoint(
+            step = Step(step),
             input = input,
             output = output,
-            nextStep = nextStep,
+            nextStep = nextStep?.let { Step(it) },
         )
     }
 
     fun flush() {
-        sampler.flush()
+        store.save(
+            version = currentVersion,
+            checkpoints = tracer.checkpoints()
+        )
     }
 
-    fun report(): DiffReport =
-        diffReporter.report(
-            currentVersion = currentVersion,
-            referenceVersion = referenceVersion
+    fun report(): Report {
+        val currentProfile = profiler.profile(
+            version = currentVersion,
+            checkpoints = tracer.checkpoints()
         )
 
-    fun printReport() {
-        val report = report()
-        if (report.hasProblems()) {
-            println("Anomalies detected:")
-            report.findings.forEach { finding ->
-                println("- ${finding.type} at node '${finding.node}': ${finding.message}")
-            }
-        } else {
-            println("No anomalies detected.")
-        }
+        val referenceCheckpoints = store.load(referenceVersion)
+        val referenceProfile = profiler.profile(
+            version = referenceVersion,
+            checkpoints = referenceCheckpoints
+        )
+
+        return analyzer.report(
+            currentProfile = currentProfile,
+            referenceProfile = referenceProfile
+        )
     }
+
+//    fun printReport() {
+//        val report = report()
+//        if (report.hasProblems()) {
+//            println("Anomalies detected:")
+//            report.findings.forEach { finding ->
+//                println("- ${finding.type} at node '${finding.node}': ${finding.message}")
+//            }
+//        } else {
+//            println("No anomalies detected.")
+//        }
+//    }
 }

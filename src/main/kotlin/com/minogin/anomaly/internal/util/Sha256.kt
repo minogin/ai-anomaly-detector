@@ -1,8 +1,8 @@
-package com.minogin.anomaly.util
+package com.minogin.anomaly.internal.util
 
 import java.security.*
 
-fun sha256(value: String): String =
+internal fun sha256(value: String): String =
     MessageDigest
         .getInstance("SHA-256")
         .digest(value.toByteArray(Charsets.UTF_8))

@@ -1,39 +1,37 @@
-package com.minogin.anomaly.common
+package com.minogin.anomaly.internal.store
 
-import com.minogin.anomaly.tracer.model.*
+import com.minogin.anomaly.internal.common.model.*
+import com.minogin.anomaly.internal.tracer.model.*
 import tools.jackson.module.kotlin.*
 import java.nio.file.*
 import kotlin.io.path.*
 
-internal class Serializer(
-    private val basePath: String
+internal class Store(
+    private val basePath: Path
 ) {
     companion object {
         private val objectMapper = jacksonObjectMapper()
     }
 
     fun save(
-        checkpoints: Collection<Checkpoint>,
-        version: String
+        version: Version,
+        checkpoints: List<Checkpoint>,
     ) {
         val path = samplesPath(version)
         Files.createDirectories(path.parent)
 
         val lines = checkpoints
-            .sortedWith(compareBy<Checkpoint> { it.step }
-                .thenBy { it.inputHash }
-                .thenBy { it.outputKind.name })
-            .joinToString("\n") { objectMapper.writeValueAsString(it) }
+            .joinToString(separator = "\n", postfix = "\n") { objectMapper.writeValueAsString(it) }
 
         Files.writeString(
             path,
-            lines + "\n",
+            lines,
             StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING
+            StandardOpenOption.APPEND
         )
     }
 
-    fun load(version: String): List<Checkpoint> {
+    fun load(version: Version): List<Checkpoint> {
         val path = samplesPath(version)
 
         if (!Files.exists(path)) {
@@ -47,6 +45,6 @@ internal class Serializer(
             .toList()
     }
 
-    private fun samplesPath(version: String): Path =
+    private fun samplesPath(version: Version): Path =
         Path("$basePath/$version.jsonl")
 }

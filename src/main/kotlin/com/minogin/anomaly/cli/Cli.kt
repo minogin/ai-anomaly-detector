@@ -2,8 +2,8 @@ package com.minogin.anomaly.cli
 
 import com.minogin.anomaly.internal.analyzer.*
 import com.minogin.anomaly.internal.common.model.*
+import com.minogin.anomaly.internal.printer.*
 import com.minogin.anomaly.internal.profiler.*
-import com.minogin.anomaly.internal.renderer.*
 import com.minogin.anomaly.internal.store.*
 import kotlin.io.path.*
 import kotlin.system.*
@@ -18,26 +18,20 @@ fun main(args: Array<String>) {
     val (basePath, currentVersion, referenceVersion) = args
     val base = Path(basePath)
 
-    val currentFile = base.resolve("$currentVersion.jsonl")
-    val referenceFile = base.resolve("$referenceVersion.jsonl")
+    try {
+        val store = Store(base)
+        val profiler = Profiler()
+        val analyzer = Analyzer()
+        val printer = Printer()
 
-    if (!currentFile.exists()) {
-        System.err.println("No data for version '$currentVersion' — expected $currentFile")
+        val currentProfile = profiler.profile(Version(currentVersion), store.load(Version(currentVersion)))
+        val referenceProfile = profiler.profile(Version(referenceVersion), store.load(Version(referenceVersion)))
+
+        val report = analyzer.report(currentProfile, referenceProfile)
+        printer.printReport(report)
+        printer.printProfile(currentVersion, currentProfile)
+    } catch (e: IllegalStateException) {
+        System.err.println("Error: ${e.message}")
         exitProcess(1)
     }
-    if (!referenceFile.exists()) {
-        System.err.println("No data for version '$referenceVersion' — expected $referenceFile")
-        exitProcess(1)
-    }
-
-    val store = Store(base)
-    val profiler = Profiler()
-    val analyzer = Analyzer()
-    val renderer = ReportRenderer()
-
-    val currentProfile = profiler.profile(Version(currentVersion), store.load(Version(currentVersion)))
-    val referenceProfile = profiler.profile(Version(referenceVersion), store.load(Version(referenceVersion)))
-
-    val report = analyzer.report(currentProfile, referenceProfile)
-    renderer.printReport(report)
 }

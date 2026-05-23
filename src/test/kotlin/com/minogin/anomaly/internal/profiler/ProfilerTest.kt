@@ -50,12 +50,40 @@ class ProfilerTest {
         )
     }
 
+    @Test
+    fun `profiles step transitions from nextStep fields`() {
+        val profiler = Profiler()
+        val checkpoints = listOf(
+            checkpoint("classify", null, "HIGH", "escalate"),
+            checkpoint("classify", null, "LOW", "approve"),
+            checkpoint("classify", null, "LOW", "approve"),
+        )
+
+        val profile = profiler.profile(Version("1.0"), checkpoints)
+
+        assertEquals(
+            mapOf(Step("classify") to setOf(Step("escalate"), Step("approve"))),
+            profile.stepTransitions
+        )
+    }
+
+    @Test
+    fun `steps with no nextStep have no transitions`() {
+        val profiler = Profiler()
+        val checkpoints = listOf(checkpoint("final-step", null, "done", null))
+
+        val profile = profiler.profile(Version("1.0"), checkpoints)
+
+        assertTrue(profile.stepTransitions.isEmpty())
+    }
+
     private fun checkpoint(
         step: String,
         input: String?,
         output: String,
         nextStep: String?
     ) = Checkpoint(
+        id = UUID.randomUUID(),
         runId = UUID.randomUUID(),
         timestamp = Clock.System.now(),
         step = Step(step),

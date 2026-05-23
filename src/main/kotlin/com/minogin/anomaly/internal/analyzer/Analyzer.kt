@@ -12,12 +12,20 @@ internal class Analyzer {
 
         val missingSteps = referenceProfile.steps - currentProfile.steps
         findings += missingSteps.map { step ->
-            Finding.MissingStep(step.name)
+            Finding.MissingStep(
+                step = step.name,
+                referenceOutputForms = referenceProfile.stepOutputForms.getValue(step),
+                referenceNextSteps = referenceProfile.stepTransitions.getOrDefault(step, emptySet()).map { it.name }.toSet()
+            )
         }
 
         val newSteps = currentProfile.steps - referenceProfile.steps
         findings += newSteps.map { step ->
-            Finding.NewStep(step.name)
+            Finding.NewStep(
+                step = step.name,
+                currentOutputForms = currentProfile.stepOutputForms.getValue(step),
+                currentNextSteps = currentProfile.stepTransitions.getOrDefault(step, emptySet()).map { it.name }.toSet()
+            )
         }
 
         currentProfile.steps.forEach { step ->

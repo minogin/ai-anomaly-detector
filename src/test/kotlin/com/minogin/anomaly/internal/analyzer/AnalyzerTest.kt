@@ -113,4 +113,61 @@ class AnalyzerTest {
         val report = analyzer.report(updatedProfile, profile)
         assertTrue(report.findings.filterIsInstance<Finding.TransitionChanged>().isEmpty())
     }
+
+    @Test
+    fun `detects output form changed between versions`() {
+        val analyzer = Analyzer()
+        val step = Step("classify")
+        val reference = Profile(
+            version = Version("1.0"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(step to setOf(OutputForm(OutputForm.Type.JSON_OBJECT, false)))
+        )
+        val current = Profile(
+            version = Version("1.1"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(step to setOf(OutputForm(OutputForm.Type.STRING, true)))
+        )
+
+        val report = analyzer.report(current, reference)
+        val finding = report.findings.filterIsInstance<Finding.OutputFormChanged>().singleOrNull()
+        assertNotNull(finding)
+        assertEquals("classify", finding.step)
+        assertEquals(setOf(OutputForm(OutputForm.Type.JSON_OBJECT, false)), finding.referenceOutputForms)
+        assertEquals(setOf(OutputForm(OutputForm.Type.STRING, true)), finding.currentOutputForms)
+    }
+
+    @Test
+    fun `detects multiple output forms within same version`() {
+        val analyzer = Analyzer()
+        val step = Step("classify")
+        val profile = Profile(
+            version = Version("1.0"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(
+                step to setOf(
+                    OutputForm(OutputForm.Type.JSON_OBJECT, false),
+                    OutputForm(OutputForm.Type.STRING, false)
+                )
+            )
+        )
+
+        val report = analyzer.report(profile, profile)
+        val finding = report.findings.filterIsInstance<Finding.MultipleOutputFormsPerStep>().singleOrNull()
+        assertNotNull(finding)
+        assertEquals("classify", finding.step)
+        assertEquals(2, finding.outputForms.size)
+    }
+
+    @Test
+    fun `does not flag unchanged output forms`() {
+        val analyzer = Analyzer()
+        val step = Step("classify")
+        val forms = mapOf(step to setOf(OutputForm(OutputForm.Type.JSON_OBJECT, false)))
+        val profile = Profile(version = Version("1.0"), steps = setOf(step), stepOutputForms = forms)
+        val updated = profile.copy(version = Version("1.1"))
+
+        val report = analyzer.report(updated, profile)
+        assertTrue(report.findings.filterIsInstance<Finding.OutputFormChanged>().isEmpty())
+    }
 }

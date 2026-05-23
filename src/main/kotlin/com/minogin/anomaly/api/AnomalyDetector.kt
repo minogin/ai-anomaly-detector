@@ -11,25 +11,14 @@ import kotlin.io.path.*
 class AnomalyDetector(
     basePath: String,
     currentVersion: String,
-    referenceVersion: String,
 ) {
-    init {
-        Runtime.getRuntime().addShutdownHook(
-            Thread {
-                flush()
-            }
-        )
-    }
-
-    private val currentVersion = Version(currentVersion)
-    private val referenceVersion = Version(referenceVersion)
+    private val currentVersion = Version(currentVersion.also {
+        require(it.isNotBlank()) { "currentVersion must not be blank" }
+    })
 
     private val store = Store(Path(basePath))
-
     private val tracer = Tracer()
-
     private val profiler = Profiler()
-
     private val analyzer = Analyzer()
 
     fun checkpoint(
@@ -38,31 +27,30 @@ class AnomalyDetector(
         output: String,
         nextStep: String? = null
     ) {
-        tracer.checkpoint(
+        val cp = tracer.checkpoint(
             step = Step(step),
             input = input,
             output = output,
             nextStep = nextStep?.let { Step(it) },
         )
+        store.append(currentVersion, cp)
     }
 
-    fun flush() {
-        store.save(
-            version = currentVersion,
-            checkpoints = tracer.checkpoints()
-        )
+    fun nextStep(step: String, nextStep: String) {
+        tracer.setNextStep(Step(step), Step(nextStep))?.let { store.append(currentVersion, it) }
     }
 
-    fun report(): Report {
+    fun report(referenceVersion: String): Report {
+        require(referenceVersion.isNotBlank()) { "referenceVersion must not be blank" }
+        val ref = Version(referenceVersion)
         val currentProfile = profiler.profile(
             version = currentVersion,
-            checkpoints = tracer.checkpoints()
+            checkpoints = store.load(currentVersion)
         )
 
-        val referenceCheckpoints = store.load(referenceVersion)
         val referenceProfile = profiler.profile(
-            version = referenceVersion,
-            checkpoints = referenceCheckpoints
+            version = ref,
+            checkpoints = store.load(ref)
         )
 
         return analyzer.report(

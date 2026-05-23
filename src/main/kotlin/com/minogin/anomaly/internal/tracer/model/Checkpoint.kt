@@ -5,6 +5,7 @@ import java.util.*
 import kotlin.time.*
 
 internal data class Checkpoint(
+    val id: UUID,
     val runId: UUID,
     val timestamp: Instant,
     val step: Step,

@@ -13,19 +13,12 @@ internal class Store(
         private val objectMapper = jacksonObjectMapper()
     }
 
-    fun save(
-        version: Version,
-        checkpoints: List<Checkpoint>,
-    ) {
+    fun append(version: Version, checkpoint: Checkpoint) {
         val path = samplesPath(version)
         Files.createDirectories(path.parent)
-
-        val lines = checkpoints
-            .joinToString(separator = "\n", postfix = "\n") { objectMapper.writeValueAsString(it) }
-
         Files.writeString(
             path,
-            lines,
+            objectMapper.writeValueAsString(checkpoint) + "\n",
             StandardOpenOption.CREATE,
             StandardOpenOption.APPEND
         )
@@ -35,13 +28,15 @@ internal class Store(
         val path = samplesPath(version)
 
         if (!Files.exists(path)) {
-            return emptyList()
+            throw IllegalStateException("No data for version '$version' — run the app with currentVersion=\"$version\" first")
         }
 
         return Files.readAllLines(path)
             .asSequence()
             .filter { it.isNotBlank() }
             .map { line -> objectMapper.readValue<Checkpoint>(line) }
+            .associateBy { it.id }
+            .values
             .toList()
     }
 

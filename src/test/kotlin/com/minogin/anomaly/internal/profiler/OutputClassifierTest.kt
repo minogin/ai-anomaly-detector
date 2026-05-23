@@ -68,6 +68,9 @@ class OutputClassifierTest {
         assertForm("42.5", OutputForm.Type.DECIMAL, quoted = false)
         assertForm("-42.5", OutputForm.Type.DECIMAL, quoted = false)
         assertForm("0.001", OutputForm.Type.DECIMAL, quoted = false)
+        assertForm("1e10", OutputForm.Type.DECIMAL, quoted = false)
+        assertForm("1.5e10", OutputForm.Type.DECIMAL, quoted = false)
+        assertForm("-3E-4", OutputForm.Type.DECIMAL, quoted = false)
     }
 
     @Test
@@ -243,6 +246,43 @@ class OutputClassifierTest {
             OutputForm.Type.MARKDOWN,
             quoted = false
         )
+    }
+
+    @Test
+    fun `classifies markdown bold`() {
+        assertForm("**Other**", OutputForm.Type.MARKDOWN, quoted = false)
+        assertForm("**High Risk**", OutputForm.Type.MARKDOWN, quoted = false)
+        assertForm("__Other__", OutputForm.Type.MARKDOWN, quoted = false)
+    }
+
+    @Test
+    fun `classifies markdown numbered list`() {
+        assertForm("1. First\n2. Second", OutputForm.Type.MARKDOWN, quoted = false)
+    }
+
+    @Test
+    fun `classifies markdown blockquote`() {
+        assertForm("> Some quoted text", OutputForm.Type.MARKDOWN, quoted = false)
+    }
+
+    @Test
+    fun `classifies markdown inline code`() {
+        assertForm("Use `val` instead of `var`", OutputForm.Type.MARKDOWN, quoted = false)
+    }
+
+    @Test
+    fun `classifies markdown strikethrough`() {
+        assertForm("~~deprecated~~", OutputForm.Type.MARKDOWN, quoted = false)
+    }
+
+    @Test
+    fun `classifies markdown image`() {
+        assertForm("![logo](https://example.com/logo.png)", OutputForm.Type.MARKDOWN, quoted = false)
+    }
+
+    @Test
+    fun `classifies markdown table`() {
+        assertForm("| Name | Value |\n|------|-------|\n| foo  | bar   |", OutputForm.Type.MARKDOWN, quoted = false)
     }
 
     @Test

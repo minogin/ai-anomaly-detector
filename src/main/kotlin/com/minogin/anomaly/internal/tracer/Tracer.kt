@@ -17,18 +17,22 @@ internal class Tracer(
         input: String? = null,
         output: String,
         nextStep: Step? = null
-    ) {
-        checkpoints.add(
-            Checkpoint(
-                runId = runId,
-                timestamp = clock.now(),
-                step = step,
-                input = input,
-                output = output,
-                nextStep = nextStep
-            )
+    ): Checkpoint {
+        val cp = Checkpoint(
+            id = UUID.randomUUID(),
+            runId = runId,
+            timestamp = clock.now(),
+            step = step,
+            input = input,
+            output = output,
+            nextStep = nextStep
         )
+        checkpoints.add(cp)
+        return cp
     }
+
+    fun setNextStep(step: Step, nextStep: Step): Checkpoint? =
+        checkpoints.updateLast({ it.step == step }) { it.copy(nextStep = nextStep) }
 
     fun checkpoints(): List<Checkpoint> = checkpoints.snapshot()
 }

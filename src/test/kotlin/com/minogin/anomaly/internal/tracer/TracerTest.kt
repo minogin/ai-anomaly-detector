@@ -61,4 +61,28 @@ class TracerTest {
 
         assertEquals(checkpoints[0].runId, checkpoints[1].runId)
     }
+
+    @Test
+    fun `setNextStep updates the most recent checkpoint for that step`() {
+        val tracer = Tracer()
+
+        tracer.checkpoint(step = Step("classify"), output = "HIGH")
+        tracer.checkpoint(step = Step("classify"), output = "LOW")
+
+        tracer.setNextStep(Step("classify"), Step("approve"))
+
+        val checkpoints = tracer.checkpoints()
+        assertNull(checkpoints[0].nextStep)
+        assertEquals(Step("approve"), checkpoints[1].nextStep)
+    }
+
+    @Test
+    fun `setNextStep does nothing when step not found`() {
+        val tracer = Tracer()
+        tracer.checkpoint(step = Step("classify"), output = "HIGH")
+
+        tracer.setNextStep(Step("unknown"), Step("approve"))
+
+        assertNull(tracer.checkpoints()[0].nextStep)
+    }
 }

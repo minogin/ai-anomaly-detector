@@ -101,7 +101,7 @@ internal class OutputClassifier(
     }
 
     private fun looksLikeDecimal(text: String): Boolean {
-        if (!text.contains('.')) {
+        if (!text.contains('.') && !text.contains('e', ignoreCase = true)) {
             return false
         }
 
@@ -119,7 +119,15 @@ internal class OutputClassifier(
         return text.startsWith("```") ||
                 lines.any { it.startsWith("# ") || it.startsWith("## ") || it.startsWith("### ") } ||
                 lines.any { it.startsWith("- ") || it.startsWith("* ") } ||
-                Regex("""\[[^]]+]\([^)]+\)""").containsMatchIn(text)
+                lines.any { it.startsWith("> ") } ||
+                lines.any { Regex("""^\d+\. """).containsMatchIn(it) } ||
+                lines.any { it.trimStart().startsWith("| ") && it.contains(" |") } ||
+                Regex("""\[[^]]+]\([^)]+\)""").containsMatchIn(text) ||
+                Regex("""!\[[^]]*]\([^)]+\)""").containsMatchIn(text) ||
+                Regex("""\*\*[^*]+\*\*""").containsMatchIn(text) ||
+                Regex("""__[^_]+__""").containsMatchIn(text) ||
+                Regex("""~~[^~]+~~""").containsMatchIn(text) ||
+                Regex("""`[^`]+`""").containsMatchIn(text)
     }
 
     private fun looksLikeHtml(text: String): Boolean {

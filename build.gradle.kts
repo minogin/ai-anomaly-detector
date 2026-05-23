@@ -9,7 +9,7 @@ application {
 }
 
 group = "com.minogin"
-version = "0.2.1"
+version = "0.2.2"
 
 repositories {
     mavenCentral()
@@ -23,6 +23,10 @@ dependencies {
 
 kotlin {
     jvmToolchain(21)
+}
+
+java {
+    withSourcesJar()
 }
 
 tasks.test {

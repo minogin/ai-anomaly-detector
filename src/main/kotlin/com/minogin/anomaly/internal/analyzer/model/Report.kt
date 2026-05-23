@@ -36,13 +36,17 @@ sealed interface Finding {
 
     data class NewStep(
         val step: String,
+        val currentOutputForms: Set<OutputForm>,
+        val currentNextSteps: Set<String>,
     ) : Finding {
         override val severity: Severity
             get() = Severity.LOW
     }
 
     data class MissingStep(
-        val step: String
+        val step: String,
+        val referenceOutputForms: Set<OutputForm>,
+        val referenceNextSteps: Set<String>,
     ) : Finding {
         override val severity: Severity
             get() = Severity.MID

@@ -25,10 +25,10 @@ internal class OutputClassifier(
     private fun classifyJson(json: JsonNode, quoted: Boolean): OutputForm {
         return when {
             json.isObject ->
-                OutputForm(OutputForm.Type.JSON_OBJECT, quoted)
+                OutputForm(OutputForm.Type.JSON_OBJECT, quoted, schema = extractSchema(json))
 
             json.isArray ->
-                OutputForm(OutputForm.Type.JSON_ARRAY, quoted)
+                OutputForm(OutputForm.Type.JSON_ARRAY, quoted, schema = extractSchema(json))
 
             json.isIntegralNumber ->
                 OutputForm(OutputForm.Type.INTEGER, quoted)
@@ -41,6 +41,24 @@ internal class OutputClassifier(
 
             else ->
                 OutputForm(OutputForm.Type.STRING, quoted)
+        }
+    }
+
+    private fun extractSchema(json: JsonNode): JsonSchema {
+        return when {
+            json.isObject -> JsonSchema.ObjectSchema(
+                json.properties().associate { it.key to extractSchema(it.value) }
+            )
+            json.isArray -> {
+                val schemas = mutableSetOf<JsonSchema>()
+                for (element in json) schemas.add(extractSchema(element))
+                JsonSchema.ArraySchema(schemas)
+            }
+            json.isIntegralNumber -> JsonSchema.Primitive.INTEGER
+            json.isFloatingPointNumber -> JsonSchema.Primitive.DECIMAL
+            json.isBoolean -> JsonSchema.Primitive.BOOLEAN
+            json.isNull -> JsonSchema.Primitive.NULL
+            else -> JsonSchema.Primitive.STRING
         }
     }
 

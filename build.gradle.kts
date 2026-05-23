@@ -1,14 +1,15 @@
 plugins {
     kotlin("jvm") version "2.3.20"
     application
+    `maven-publish`
 }
 
 application {
-    mainClass = "com.minogin.checkpoint.cli.CliKt"
+    mainClass = "com.minogin.anomaly.cli.CliKt"
 }
 
 group = "com.minogin"
-version = "0.2.0"
+version = "0.2.1"
 
 repositories {
     mavenCentral()
@@ -28,10 +29,18 @@ tasks.test {
     useJUnitPlatform()
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
+}
+
 tasks.register<Jar>("cliJar") {
     archiveClassifier = "cli"
     manifest {
-        attributes["Main-Class"] = "com.minogin.checkpoint.cli.CliKt"
+        attributes["Main-Class"] = "com.minogin.anomaly.cli.CliKt"
     }
     from(sourceSets.main.get().output)
     dependsOn(configurations.runtimeClasspath)

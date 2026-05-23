@@ -70,16 +70,4 @@ class AnomalyDetector(
             referenceProfile = referenceProfile
         )
     }
-
-//    fun printReport() {
-//        val report = report()
-//        if (report.hasProblems()) {
-//            println("Anomalies detected:")
-//            report.findings.forEach { finding ->
-//                println("- ${finding.type} at node '${finding.node}': ${finding.message}")
-//            }
-//        } else {
-//            println("No anomalies detected.")
-//        }
-//    }
 }

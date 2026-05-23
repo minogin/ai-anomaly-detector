@@ -47,6 +47,15 @@ sealed interface Finding {
         override val severity: Severity
             get() = Severity.MID
     }
+
+    data class TransitionChanged(
+        val step: String,
+        val addedNextSteps: Set<String>,
+        val removedNextSteps: Set<String>,
+    ) : Finding {
+        override val severity: Severity
+            get() = Severity.MID
+    }
 }
 
 //    val step: String,

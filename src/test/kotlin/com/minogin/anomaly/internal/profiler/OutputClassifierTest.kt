@@ -1,5 +1,6 @@
 package com.minogin.anomaly.internal.profiler
 
+import com.minogin.anomaly.internal.profiler.model.JsonSchema
 import com.minogin.anomaly.internal.profiler.model.OutputForm
 import org.junit.jupiter.api.Test
 import kotlin.test.*
@@ -341,17 +342,115 @@ class OutputClassifierTest {
         )
     }
 
+    @Test
+    fun `json object schema captures field names and value types`() {
+        assertSchema(
+            """{"riskLevel":"HIGH","score":42}""",
+            JsonSchema.ObjectSchema(
+                mapOf(
+                    "riskLevel" to JsonSchema.Primitive.STRING,
+                    "score" to JsonSchema.Primitive.INTEGER
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `json object schema captures nested objects`() {
+        assertSchema(
+            """{"result":{"status":"ok","count":3}}""",
+            JsonSchema.ObjectSchema(
+                mapOf(
+                    "result" to JsonSchema.ObjectSchema(
+                        mapOf(
+                            "status" to JsonSchema.Primitive.STRING,
+                            "count" to JsonSchema.Primitive.INTEGER
+                        )
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `json array schema captures homogeneous element type`() {
+        assertSchema(
+            """[1, 2, 3]""",
+            JsonSchema.ArraySchema(setOf(JsonSchema.Primitive.INTEGER))
+        )
+    }
+
+    @Test
+    fun `json array schema captures object element shape`() {
+        assertSchema(
+            """[{"id":1,"name":"foo"},{"id":2,"name":"bar"}]""",
+            JsonSchema.ArraySchema(
+                setOf(
+                    JsonSchema.ObjectSchema(
+                        mapOf(
+                            "id" to JsonSchema.Primitive.INTEGER,
+                            "name" to JsonSchema.Primitive.STRING
+                        )
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `json array schema captures mixed element types`() {
+        assertSchema(
+            """[1, "foo"]""",
+            JsonSchema.ArraySchema(setOf(JsonSchema.Primitive.INTEGER, JsonSchema.Primitive.STRING))
+        )
+    }
+
+    @Test
+    fun `empty json array schema has no element schemas`() {
+        assertSchema(
+            """[]""",
+            JsonSchema.ArraySchema(emptySet())
+        )
+    }
+
+    @Test
+    fun `quoted json object carries schema`() {
+        assertSchema(
+            """"{\"riskLevel\":\"HIGH\",\"score\":42}"""",
+            JsonSchema.ObjectSchema(
+                mapOf(
+                    "riskLevel" to JsonSchema.Primitive.STRING,
+                    "score" to JsonSchema.Primitive.INTEGER
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `json object schema captures boolean and null fields`() {
+        assertSchema(
+            """{"active":true,"reason":null}""",
+            JsonSchema.ObjectSchema(
+                mapOf(
+                    "active" to JsonSchema.Primitive.BOOLEAN,
+                    "reason" to JsonSchema.Primitive.NULL
+                )
+            )
+        )
+    }
+
     private fun assertForm(
         output: String,
         expectedType: OutputForm.Type,
         quoted: Boolean
     ) {
-        assertEquals(
-            OutputForm(
-                type = expectedType,
-                quoted = quoted
-            ),
-            classifier.classify(output)
-        )
+        val form = classifier.classify(output)
+        assertEquals(expectedType, form.type)
+        assertEquals(quoted, form.quoted)
+    }
+
+    private fun assertSchema(output: String, expectedSchema: JsonSchema) {
+        val form = classifier.classify(output)
+        assertEquals(expectedSchema, form.schema)
     }
 }

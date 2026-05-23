@@ -6,4 +6,5 @@ internal data class Profile(
     val version: Version,
     val steps: Set<Step>,
     val stepOutputForms: Map<Step, Set<OutputForm>>,
+    val stepTransitions: Map<Step, Set<Step>> = emptyMap(),
 )

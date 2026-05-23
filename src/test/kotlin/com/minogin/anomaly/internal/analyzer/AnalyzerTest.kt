@@ -46,4 +46,71 @@ class AnalyzerTest {
         assertNotNull(missingStepFinding)
         assertEquals("Step 1", missingStepFinding.step)
     }
+
+    @Test
+    fun `detects when a step gains a new transition`() {
+        val analyzer = Analyzer()
+        val step = Step("classify")
+        val profile = Profile(
+            version = Version("1.0"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(step to setOf(OutputForm(OutputForm.Type.STRING, false))),
+            stepTransitions = mapOf(step to setOf(Step("approve"), Step("reject")))
+        )
+        val updatedProfile = Profile(
+            version = Version("1.1"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(step to setOf(OutputForm(OutputForm.Type.STRING, false))),
+            stepTransitions = mapOf(step to setOf(Step("approve"), Step("reject"), Step("escalate")))
+        )
+
+        val report = analyzer.report(updatedProfile, profile)
+        val finding = report.findings.filterIsInstance<Finding.TransitionChanged>().singleOrNull()
+        assertNotNull(finding)
+        assertEquals("classify", finding.step)
+        assertEquals(setOf("escalate"), finding.addedNextSteps)
+        assertTrue(finding.removedNextSteps.isEmpty())
+    }
+
+    @Test
+    fun `detects when a step loses a transition`() {
+        val analyzer = Analyzer()
+        val step = Step("classify")
+        val profile = Profile(
+            version = Version("1.0"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(step to setOf(OutputForm(OutputForm.Type.STRING, false))),
+            stepTransitions = mapOf(step to setOf(Step("approve"), Step("reject")))
+        )
+        val updatedProfile = Profile(
+            version = Version("1.1"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(step to setOf(OutputForm(OutputForm.Type.STRING, false))),
+            stepTransitions = mapOf(step to setOf(Step("approve")))
+        )
+
+        val report = analyzer.report(updatedProfile, profile)
+        val finding = report.findings.filterIsInstance<Finding.TransitionChanged>().singleOrNull()
+        assertNotNull(finding)
+        assertEquals("classify", finding.step)
+        assertTrue(finding.addedNextSteps.isEmpty())
+        assertEquals(setOf("reject"), finding.removedNextSteps)
+    }
+
+    @Test
+    fun `does not flag unchanged transitions`() {
+        val analyzer = Analyzer()
+        val step = Step("classify")
+        val transitions = mapOf(step to setOf(Step("approve"), Step("reject")))
+        val profile = Profile(
+            version = Version("1.0"),
+            steps = setOf(step),
+            stepOutputForms = mapOf(step to setOf(OutputForm(OutputForm.Type.STRING, false))),
+            stepTransitions = transitions
+        )
+        val updatedProfile = profile.copy(version = Version("1.1"))
+
+        val report = analyzer.report(updatedProfile, profile)
+        assertTrue(report.findings.filterIsInstance<Finding.TransitionChanged>().isEmpty())
+    }
 }

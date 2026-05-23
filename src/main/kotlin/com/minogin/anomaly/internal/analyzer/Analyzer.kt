@@ -45,6 +45,20 @@ internal class Analyzer {
                 null
         }
 
+        findings += commonSteps.mapNotNull { step ->
+            val currentNextSteps = currentProfile.stepTransitions.getOrDefault(step, emptySet())
+            val referenceNextSteps = referenceProfile.stepTransitions.getOrDefault(step, emptySet())
+            val added = currentNextSteps - referenceNextSteps
+            val removed = referenceNextSteps - currentNextSteps
+            if (added.isNotEmpty() || removed.isNotEmpty()) {
+                Finding.TransitionChanged(
+                    step = step.name,
+                    addedNextSteps = added.map { it.name }.toSet(),
+                    removedNextSteps = removed.map { it.name }.toSet()
+                )
+            } else null
+        }
+
         return Report(
             currentVersion = currentProfile.version.value,
             referenceVersion = referenceProfile.version.value,

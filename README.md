@@ -2,6 +2,8 @@
 
 Detect structural drift in AI/LLM workflow outputs between versions.
 
+![AI Anomaly Detector — diff view](docs/preview-no-title.png)
+
 ## The Problem
 
 AI workflows can silently break when you change a prompt, model, or code. The output may still look reasonable to a human, but its structure has changed — a JSON object becomes a quoted string, a field gets added or removed, a classifier starts returning markdown instead of a scalar. Downstream code that parses these outputs then breaks without an obvious error.

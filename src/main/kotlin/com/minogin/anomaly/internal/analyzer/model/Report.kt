@@ -52,26 +52,30 @@ sealed interface Finding {
             get() = Severity.MID
     }
 
+    /** The set of targets a step routes to differs between versions. Counts per target are included for context. */
     data class TransitionChanged(
         val step: String,
         val addedNextSteps: Set<String>,
         val removedNextSteps: Set<String>,
+        val referenceCounts: Map<String, Int> = emptyMap(),
+        val currentCounts: Map<String, Int> = emptyMap(),
+    ) : Finding {
+        override val severity: Severity
+            get() = Severity.MID
+    }
+
+    /**
+     * Same set of targets in both versions, but the share of routings going to each target moved
+     * by at least the configured threshold. [shift] is the share of routings that changed target.
+     */
+    data class RoutingDistributionChanged(
+        val step: String,
+        val referenceCounts: Map<String, Int>,
+        val currentCounts: Map<String, Int>,
+        val shift: Double,
+        val threshold: Double,
     ) : Finding {
         override val severity: Severity
             get() = Severity.MID
     }
 }
-
-//    val step: String,
-//    val inputHash: String?,
-//    val message: String,
-//    val referenceKinds: Map<OutputType, Int>,
-//    val currentKinds: Map<OutputType, Int>,
-//    val referenceExampleOutput: String?,
-//    val currentExampleOutput: String?
-
-//        TODO
-//        STEP_OUTPUT_PROFILE_CHANGED,
-//        EXACT_INPUT_OUTPUT_KIND_CHANGED,
-//        NODE_DISAPPEARED,
-//        NEXT_STEP_DRIFT

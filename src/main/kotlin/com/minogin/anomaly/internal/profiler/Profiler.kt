@@ -19,11 +19,11 @@ internal class Profiler {
                 .mapValues { (_, checkpoints) ->
                     checkpoints.map { classifier.classify(it.output) }.toSet()
                 },
-            stepTransitions = checkpoints
+            stepTransitionCounts = checkpoints
                 .filter { it.nextStep != null }
                 .groupBy { it.step }
                 .mapValues { (_, checkpoints) ->
-                    checkpoints.mapNotNull { it.nextStep }.toSet()
+                    checkpoints.groupingBy { it.nextStep!! }.eachCount()
                 }
         )
 }

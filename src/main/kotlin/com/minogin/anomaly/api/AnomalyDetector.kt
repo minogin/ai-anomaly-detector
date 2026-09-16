@@ -8,9 +8,10 @@ import com.minogin.anomaly.internal.store.*
 import com.minogin.anomaly.internal.tracer.*
 import kotlin.io.path.*
 
-class AnomalyDetector(
+class AnomalyDetector @JvmOverloads constructor(
     basePath: String,
     currentVersion: String,
+    config: AnalyzerConfig = AnalyzerConfig(),
 ) {
     private val currentVersion = Version(currentVersion.also {
         require(it.isNotBlank()) { "currentVersion must not be blank" }
@@ -19,7 +20,7 @@ class AnomalyDetector(
     private val store = Store(Path(basePath))
     private val tracer = Tracer()
     private val profiler = Profiler()
-    private val analyzer = Analyzer()
+    private val analyzer = Analyzer(config)
 
     fun checkpoint(
         step: String,

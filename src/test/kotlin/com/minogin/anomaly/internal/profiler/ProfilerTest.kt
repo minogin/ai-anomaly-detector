@@ -65,6 +65,10 @@ class ProfilerTest {
             mapOf(Step("classify") to setOf(Step("escalate"), Step("approve"))),
             profile.stepTransitions
         )
+        assertEquals(
+            mapOf(Step("classify") to mapOf(Step("escalate") to 1, Step("approve") to 2)),
+            profile.stepTransitionCounts
+        )
     }
 
     @Test

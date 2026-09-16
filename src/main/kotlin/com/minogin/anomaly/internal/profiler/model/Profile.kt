@@ -8,6 +8,8 @@ internal data class Profile(
     val stepOutputForms: Map<Step, Set<OutputForm>>,
     /** For each step, how many times it routed to each next step. Steps that never routed are absent. */
     val stepTransitionCounts: Map<Step, Map<Step, Int>> = emptyMap(),
+    /** For each step, the first output seen for each of its output forms. */
+    val stepExamples: Map<Step, Map<OutputForm, String>> = emptyMap(),
 ) {
     /** The set of next steps each step routed to, derived from the counts. */
     val stepTransitions: Map<Step, Set<Step>>

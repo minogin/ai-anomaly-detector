@@ -5,6 +5,12 @@ import com.minogin.anomaly.internal.profiler.model.*
 
 internal class Printer {
 
+    companion object {
+        /** Reports are meant to be readable on a projector. */
+        const val MAX_WIDTH = 100
+        const val MAX_EXAMPLE_LENGTH = 60
+    }
+
     /**
      * Findings print by severity, highest first. Within one severity the order is fixed per kind
      * so that a report reads from "what the step produces" to "where the flow goes":
@@ -33,11 +39,10 @@ internal class Printer {
             report.findings.sortedWith(displayOrder).forEach { finding ->
                 when (finding) {
                     is Finding.OutputFormChanged -> printOutputFormChanged(finding)
-                    is Finding.MultipleOutputFormsPerStep ->
-                        println(
-                            "[${finding.severity}] Inconsistent output forms at '${finding.step}'\n" +
-                                    "  Forms: ${finding.outputForms.joinToString { formatForm(it) }}"
-                        )
+                    is Finding.MultipleOutputFormsPerStep -> {
+                        println("[${finding.severity}] Inconsistent output forms at '${finding.step}'")
+                        printForms("Forms:", finding.outputForms, finding.examples)
+                    }
                     is Finding.TransitionChanged -> {
                         println("[${finding.severity}] Transitions changed at '${finding.step}'")
                         if (finding.addedNextSteps.isNotEmpty())
@@ -57,13 +62,13 @@ internal class Printer {
                     }
                     is Finding.MissingStep -> {
                         println("[${finding.severity}] Step missing: '${finding.step}'")
-                        println("  Reference forms: ${finding.referenceOutputForms.joinToString { formatForm(it) }}")
+                        printForms("Reference forms:", finding.referenceOutputForms, finding.referenceExamples)
                         if (finding.referenceNextSteps.isNotEmpty())
                             println("  Reference transitions: ${finding.referenceNextSteps.joinToString()}")
                     }
                     is Finding.NewStep -> {
                         println("[${finding.severity}] New step: '${finding.step}'")
-                        println("  Current forms: ${finding.currentOutputForms.joinToString { formatForm(it) }}")
+                        printForms("Current forms:", finding.currentOutputForms, finding.currentExamples)
                         if (finding.currentNextSteps.isNotEmpty())
                             println("  Current transitions: ${finding.currentNextSteps.joinToString()}")
                     }
@@ -91,8 +96,8 @@ internal class Printer {
 
         val title = if (schemaDiff != null) "JSON schema changed" else "Output form changed"
         println("[${finding.severity}] $title at '${finding.step}'")
-        println("  Reference: ${finding.referenceOutputForms.joinToString { formatForm(it) }}")
-        println("  Current:   ${finding.currentOutputForms.joinToString { formatForm(it) }}")
+        printForms("Reference:", finding.referenceOutputForms, finding.referenceExamples)
+        printForms("Current:  ", finding.currentOutputForms, finding.currentExamples)
 
         if (schemaDiff != null) {
             if (schemaDiff.added.isNotEmpty())
@@ -102,6 +107,38 @@ internal class Printer {
             if (schemaDiff.changed.isNotEmpty())
                 println("  Changed:   ${schemaDiff.changed.entries.joinToString { (path, change) -> "$path: ${change.first.format()} -> ${change.second.format()}" }}")
         }
+    }
+
+    /**
+     * Without examples: `  Label: FORM_A, FORM_B` on one line, as before.
+     * With examples: one form per line, its example inline after `e.g.` when that fits in
+     * [MAX_WIDTH] columns, otherwise on the next line under the form.
+     */
+    private fun printForms(label: String, forms: Set<OutputForm>, examples: Map<OutputForm, String>) {
+        if (examples.isEmpty()) {
+            println("  $label ${forms.joinToString { formatForm(it) }}")
+            return
+        }
+        val indent = " ".repeat(2 + label.length + 1)
+        forms.forEachIndexed { index, form ->
+            val prefix = if (index == 0) "  $label " else indent
+            val formText = formatForm(form)
+            val example = examples[form]?.let { "e.g. ${abbreviate(it)}" }
+            when {
+                example == null -> println(prefix + formText)
+                (prefix + formText + "  " + example).length <= MAX_WIDTH -> println("$prefix$formText  $example")
+                else -> {
+                    println(prefix + formText)
+                    println(indent + example)
+                }
+            }
+        }
+    }
+
+    /** One line, whitespace collapsed, at most [MAX_EXAMPLE_LENGTH] characters. */
+    private fun abbreviate(output: String): String {
+        val oneLine = output.replace(Regex("\\s+"), " ").trim()
+        return if (oneLine.length <= MAX_EXAMPLE_LENGTH) oneLine else oneLine.take(MAX_EXAMPLE_LENGTH - 3) + "..."
     }
 
     /** Non-null only when both sides are a single form of the same type that differ in schema alone. */

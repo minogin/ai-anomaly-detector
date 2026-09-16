@@ -37,6 +37,14 @@ data class AnalyzerConfig(
      * rather than reporting something meaningless. Default 10.
      */
     val routingMaxTargets: Int = 10,
+
+    /**
+     * Attach one example output per output form to the findings, so the report shows what the
+     * STRING or MARKDOWN actually looked like. Examples are the recorded outputs themselves, so turn
+     * this off when the report must not carry potentially sensitive text. Note that the checkpoint
+     * files on disk always contain the full inputs and outputs regardless of this setting.
+     */
+    val includeExamples: Boolean = true,
 ) {
     init {
         require(routingShiftThreshold in 0.0..1.0) { "routingShiftThreshold must be between 0 and 1, was $routingShiftThreshold" }

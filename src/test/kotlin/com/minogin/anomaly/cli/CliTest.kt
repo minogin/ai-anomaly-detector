@@ -22,6 +22,13 @@ class CliTest {
     }
 
     @Test
+    fun `no-examples flag turns examples off and takes no value`() {
+        assertTrue(parseArgs(arrayOf("data", "1.1", "1.0")).config.includeExamples)
+        assertFalse(parseArgs(arrayOf("data", "1.1", "1.0", "--no-examples")).config.includeExamples)
+        assertFailsWith<IllegalArgumentException> { parseArgs(arrayOf("data", "1.1", "1.0", "--no-examples=true")) }
+    }
+
+    @Test
     fun `rejects wrong argument count`() {
         assertFailsWith<IllegalArgumentException> { parseArgs(arrayOf("data", "1.1")) }
         assertFailsWith<IllegalArgumentException> { parseArgs(arrayOf("data", "1.1", "1.0", "extra")) }

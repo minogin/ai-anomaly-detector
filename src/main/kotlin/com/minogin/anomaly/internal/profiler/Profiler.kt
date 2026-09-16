@@ -24,6 +24,13 @@ internal class Profiler {
                 .groupBy { it.step }
                 .mapValues { (_, checkpoints) ->
                     checkpoints.groupingBy { it.nextStep!! }.eachCount()
+                },
+            stepExamples = checkpoints
+                .groupBy { it.step }
+                .mapValues { (_, checkpoints) ->
+                    val examples = linkedMapOf<OutputForm, String>()
+                    checkpoints.forEach { examples.putIfAbsent(classifier.classify(it.output), it.output) }
+                    examples
                 }
         )
 }

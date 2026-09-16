@@ -47,6 +47,8 @@ class DemoTest {
         assertEquals("classify-query", forms.step)
         assertEquals(setOf(OutputForm.Type.STRING), forms.referenceOutputForms.map { it.type }.toSet())
         assertEquals(setOf(OutputForm.Type.STRING, OutputForm.Type.MARKDOWN), forms.currentOutputForms.map { it.type }.toSet())
+        assertEquals("**feedback**", forms.currentExamples[OutputForm(OutputForm.Type.MARKDOWN, false)], "the example is the talk's opening incident")
+        assertEquals("support", forms.referenceExamples[OutputForm(OutputForm.Type.STRING, false)])
 
         val routing = report.findings.filterIsInstance<Finding.RoutingDistributionChanged>().single()
         assertEquals("classify-query", routing.step)

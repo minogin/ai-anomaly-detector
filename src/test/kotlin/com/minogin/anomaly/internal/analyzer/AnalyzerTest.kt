@@ -260,6 +260,40 @@ class AnalyzerTest {
     }
 
     @Test
+    fun `findings carry example outputs unless disabled`() {
+        val string = OutputForm(OutputForm.Type.STRING, false)
+        val markdown = OutputForm(OutputForm.Type.MARKDOWN, false)
+        val reference = Profile(
+            version = Version("1.0"),
+            steps = setOf(step, Step("gone")),
+            stepOutputForms = mapOf(step to setOf(string), Step("gone") to setOf(string)),
+            stepExamples = mapOf(step to mapOf(string to "feedback"), Step("gone") to mapOf(string to "bye")),
+        )
+        val current = Profile(
+            version = Version("1.1"),
+            steps = setOf(step, Step("fresh")),
+            stepOutputForms = mapOf(step to setOf(string, markdown), Step("fresh") to setOf(string)),
+            stepExamples = mapOf(step to mapOf(string to "support", markdown to "**feedback**"), Step("fresh") to mapOf(string to "hi")),
+        )
+
+        val with = Analyzer().report(current, reference).findings
+        val changed = with.filterIsInstance<Finding.OutputFormChanged>().single()
+        assertEquals(mapOf(string to "feedback"), changed.referenceExamples)
+        assertEquals(mapOf(string to "support", markdown to "**feedback**"), changed.currentExamples)
+        assertEquals(mapOf(string to "support", markdown to "**feedback**"), with.filterIsInstance<Finding.MultipleOutputFormsPerStep>().single().examples)
+        assertEquals(mapOf(string to "bye"), with.filterIsInstance<Finding.MissingStep>().single().referenceExamples)
+        assertEquals(mapOf(string to "hi"), with.filterIsInstance<Finding.NewStep>().single().currentExamples)
+
+        val without = Analyzer(AnalyzerConfig(includeExamples = false)).report(current, reference).findings
+        assertEquals(with.size, without.size)
+        val stripped = without.filterIsInstance<Finding.OutputFormChanged>().single()
+        assertTrue(stripped.referenceExamples.isEmpty() && stripped.currentExamples.isEmpty())
+        assertTrue(without.filterIsInstance<Finding.MultipleOutputFormsPerStep>().single().examples.isEmpty())
+        assertTrue(without.filterIsInstance<Finding.MissingStep>().single().referenceExamples.isEmpty())
+        assertTrue(without.filterIsInstance<Finding.NewStep>().single().currentExamples.isEmpty())
+    }
+
+    @Test
     fun `config rejects nonsensical values`() {
         assertFailsWith<IllegalArgumentException> { AnalyzerConfig(routingShiftThreshold = 1.5) }
         assertFailsWith<IllegalArgumentException> { AnalyzerConfig(routingShiftThreshold = -0.1) }

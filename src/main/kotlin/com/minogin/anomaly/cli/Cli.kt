@@ -17,6 +17,7 @@ Options (routing distribution check, see AnalyzerConfig for how the defaults wer
   --routing-threshold=<0..1>   share of routings that must change target to report (default 0.25)
   --routing-min-samples=<n>    routed samples each version needs for the check to run (default 5)
   --routing-max-targets=<n>    skip the check for steps with more distinct targets (default 10)
+  --no-examples                do not show example outputs in findings (they are recorded outputs)
 """
 
 internal data class CliArgs(
@@ -28,22 +29,29 @@ internal data class CliArgs(
 
 internal fun parseArgs(args: Array<String>): CliArgs {
     val positional = args.filterNot { it.startsWith("--") }
+    // name -> value; a bare flag such as --no-examples maps to null
     val options = args.filter { it.startsWith("--") }.associate { option ->
-        val (name, value) = option.removePrefix("--").split("=", limit = 2).also {
-            require(it.size == 2) { "Option '$option' needs a value: $option=<value>" }
-        }
-        name to value
+        val parts = option.removePrefix("--").split("=", limit = 2)
+        parts[0] to parts.getOrNull(1)
     }
     require(positional.size == 3) { "Expected 3 arguments, got ${positional.size}" }
+
+    val valued = setOf("routing-threshold", "routing-min-samples", "routing-max-targets")
+    val flags = setOf("no-examples")
+    val unknown = options.keys - valued - flags
+    require(unknown.isEmpty()) { "Unknown option(s): ${unknown.joinToString { "--$it" }}" }
+    options.forEach { (name, value) ->
+        if (name in valued) require(value != null) { "Option '--$name' needs a value: --$name=<value>" }
+        if (name in flags) require(value == null) { "Option '--$name' takes no value" }
+    }
 
     val defaults = AnalyzerConfig()
     val config = AnalyzerConfig(
         routingShiftThreshold = options["routing-threshold"]?.let { it.toDoubleOrNull() ?: throw IllegalArgumentException("--routing-threshold must be a number, was '$it'") } ?: defaults.routingShiftThreshold,
         routingMinSamples = options["routing-min-samples"]?.let { it.toIntOrNull() ?: throw IllegalArgumentException("--routing-min-samples must be an integer, was '$it'") } ?: defaults.routingMinSamples,
         routingMaxTargets = options["routing-max-targets"]?.let { it.toIntOrNull() ?: throw IllegalArgumentException("--routing-max-targets must be an integer, was '$it'") } ?: defaults.routingMaxTargets,
+        includeExamples = "no-examples" !in options,
     )
-    val unknown = options.keys - setOf("routing-threshold", "routing-min-samples", "routing-max-targets")
-    require(unknown.isEmpty()) { "Unknown option(s): ${unknown.joinToString { "--$it" }}" }
 
     return CliArgs(positional[0], positional[1], positional[2], config)
 }

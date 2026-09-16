@@ -19,7 +19,8 @@ sealed interface Finding {
 
     data class MultipleOutputFormsPerStep(
         val step: String,
-        val outputForms: Set<OutputForm>
+        val outputForms: Set<OutputForm>,
+        val examples: Map<OutputForm, String> = emptyMap(),
     ) : Finding {
         override val severity: Severity
             get() = Severity.HIGH
@@ -29,6 +30,8 @@ sealed interface Finding {
         val step: String,
         val currentOutputForms: Set<OutputForm>,
         val referenceOutputForms: Set<OutputForm>,
+        val currentExamples: Map<OutputForm, String> = emptyMap(),
+        val referenceExamples: Map<OutputForm, String> = emptyMap(),
     ) : Finding {
         override val severity: Severity
             get() = Severity.HIGH
@@ -38,6 +41,7 @@ sealed interface Finding {
         val step: String,
         val currentOutputForms: Set<OutputForm>,
         val currentNextSteps: Set<String>,
+        val currentExamples: Map<OutputForm, String> = emptyMap(),
     ) : Finding {
         override val severity: Severity
             get() = Severity.LOW
@@ -47,6 +51,7 @@ sealed interface Finding {
         val step: String,
         val referenceOutputForms: Set<OutputForm>,
         val referenceNextSteps: Set<String>,
+        val referenceExamples: Map<OutputForm, String> = emptyMap(),
     ) : Finding {
         override val severity: Severity
             get() = Severity.MID

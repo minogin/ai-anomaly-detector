@@ -164,6 +164,86 @@ class PrinterTest {
     }
 
     @Test
+    fun `examples print inline after each form, one form per line`() {
+        val string = OutputForm(OutputForm.Type.STRING, false)
+        val markdown = OutputForm(OutputForm.Type.MARKDOWN, false)
+        val out = capture {
+            Printer().printReport(
+                report(
+                    Finding.OutputFormChanged(
+                        step = "classify-query",
+                        referenceOutputForms = setOf(string),
+                        currentOutputForms = setOf(string, markdown),
+                        referenceExamples = mapOf(string to "feedback"),
+                        currentExamples = mapOf(string to "support", markdown to "**feedback**"),
+                    ),
+                    Finding.MultipleOutputFormsPerStep("classify-query", setOf(string, markdown), mapOf(string to "support", markdown to "**feedback**")),
+                )
+            )
+        }
+        assertContains(
+            out,
+            """
+            [HIGH] Output form changed at 'classify-query'
+              Reference: STRING  e.g. feedback
+              Current:   STRING  e.g. support
+                         MARKDOWN  e.g. **feedback**
+            [HIGH] Inconsistent output forms at 'classify-query'
+              Forms: STRING  e.g. support
+                     MARKDOWN  e.g. **feedback**
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun `long examples move to the next line, get one-lined and cut at 60 characters`() {
+        val schema = obj("reply" to STRING, "discount" to INTEGER)
+        val json = OutputForm(OutputForm.Type.JSON_OBJECT, false, schema)
+        val string = OutputForm(OutputForm.Type.STRING, false)
+        val longText = "line one\n  line two with   lots of words that go on and on and on and on and on and on"
+        val out = capture {
+            Printer().printReport(
+                report(
+                    Finding.OutputFormChanged(
+                        step = "handle-sales",
+                        referenceOutputForms = setOf(json),
+                        currentOutputForms = setOf(string),
+                        referenceExamples = mapOf(json to """{"reply": "Happy to help with pricing.", "discount": 10}"""),
+                        currentExamples = mapOf(string to longText),
+                    )
+                )
+            )
+        }
+        assertContains(
+            out,
+            """
+            [HIGH] Output form changed at 'handle-sales'
+              Reference: JSON_OBJECT {reply=STRING, discount=INTEGER}
+                         e.g. {"reply": "Happy to help with pricing.", "discount": 10}
+              Current:   STRING  e.g. line one line two with lots of words that go on and on an...
+            """.trimIndent()
+        )
+        val example = out.lines().single { it.contains("line one") }.substringAfter("e.g. ")
+        assertEquals(60, example.length)
+        assertTrue(out.lines().all { it.length <= 100 }, out)
+    }
+
+    @Test
+    fun `forms without examples print on one line as before`() {
+        val string = OutputForm(OutputForm.Type.STRING, false)
+        val out = capture {
+            Printer().printReport(
+                report(
+                    Finding.MissingStep("handle-feedback", setOf(string), setOf("summarize")),
+                    Finding.NewStep("extra", setOf(string), emptySet(), mapOf(string to "hello")),
+                )
+            )
+        }
+        assertContains(out, "[MID] Step missing: 'handle-feedback'\n  Reference forms: STRING\n  Reference transitions: summarize\n")
+        assertContains(out, "[LOW] New step: 'extra'\n  Current forms: STRING  e.g. hello\n")
+    }
+
+    @Test
     fun `profile lists steps and their targets sorted by name`() {
         val string = OutputForm(OutputForm.Type.STRING, false)
         val profile = Profile(

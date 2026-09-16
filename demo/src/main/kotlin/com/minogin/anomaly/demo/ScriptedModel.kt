@@ -22,8 +22,11 @@ class ScriptedModel(private val version: String) {
             "1.3" to "router silently classifies every feedback message as support",
         )
 
-        /** Conversations whose router answer comes back bold in 1.1: one sales, two feedback, one support. */
-        private val BOLD_IN_1_1 = setOf(2, 3, 4, 7)
+        /**
+         * Conversations whose router answer comes back bold in 1.1: two feedback, one support, one sales.
+         * The first one is a feedback message so the report's example reads `**feedback**`, the talk's opening incident.
+         */
+        private val BOLD_IN_1_1 = setOf(3, 4, 6, 7)
     }
 
     init {

@@ -14,13 +14,17 @@ internal class Analyzer(
         referenceProfile: Profile
     ): Report {
         val findings = mutableListOf<Finding>()
+        val examplesOf = { profile: Profile, step: Step ->
+            if (config.includeExamples) profile.stepExamples.getOrDefault(step, emptyMap()) else emptyMap()
+        }
 
         val missingSteps = referenceProfile.steps - currentProfile.steps
         findings += missingSteps.map { step ->
             Finding.MissingStep(
                 step = step.name,
                 referenceOutputForms = referenceProfile.stepOutputForms.getValue(step),
-                referenceNextSteps = referenceProfile.stepTransitions.getOrDefault(step, emptySet()).map { it.name }.toSet()
+                referenceNextSteps = referenceProfile.stepTransitions.getOrDefault(step, emptySet()).map { it.name }.toSet(),
+                referenceExamples = examplesOf(referenceProfile, step),
             )
         }
 
@@ -29,7 +33,8 @@ internal class Analyzer(
             Finding.NewStep(
                 step = step.name,
                 currentOutputForms = currentProfile.stepOutputForms.getValue(step),
-                currentNextSteps = currentProfile.stepTransitions.getOrDefault(step, emptySet()).map { it.name }.toSet()
+                currentNextSteps = currentProfile.stepTransitions.getOrDefault(step, emptySet()).map { it.name }.toSet(),
+                currentExamples = examplesOf(currentProfile, step),
             )
         }
 
@@ -38,7 +43,8 @@ internal class Analyzer(
             if (outputForms.size > 1) {
                 findings += Finding.MultipleOutputFormsPerStep(
                     step = step.name,
-                    outputForms = outputForms
+                    outputForms = outputForms,
+                    examples = examplesOf(currentProfile, step),
                 )
             }
         }
@@ -52,7 +58,9 @@ internal class Analyzer(
                 Finding.OutputFormChanged(
                     step = step.name,
                     currentOutputForms = currentOutputForms,
-                    referenceOutputForms = referenceOutputForms
+                    referenceOutputForms = referenceOutputForms,
+                    currentExamples = examplesOf(currentProfile, step),
+                    referenceExamples = examplesOf(referenceProfile, step),
                 )
             } else
                 null

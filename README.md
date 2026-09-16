@@ -105,6 +105,24 @@ java -jar anomaly-detector-cli.jar .ai-anomaly-detector 1.1 1.0 \
     --routing-threshold=0.1 --routing-min-samples=20 --routing-max-targets=6
 ```
 
+### Example outputs in the report
+
+Each output form in a finding is shown with one example, the first output of that form the step
+produced, cut to 60 characters:
+
+```
+[HIGH] Output form changed at 'classify-query'
+  Reference: STRING  e.g. support
+  Current:   STRING  e.g. support
+             MARKDOWN  e.g. **feedback**
+```
+
+Examples are your recorded outputs. If a report must not carry that text, turn them off with
+`--no-examples` on the CLI or `AnalyzerConfig(includeExamples = false)` in code; the findings then
+contain no output text at all. This affects the report only: the checkpoint files under
+`.ai-anomaly-detector/` always contain every input and output in full, so treat that directory as
+you would treat logs.
+
 ## Output Classification
 
 Outputs are classified by structural type before comparison:

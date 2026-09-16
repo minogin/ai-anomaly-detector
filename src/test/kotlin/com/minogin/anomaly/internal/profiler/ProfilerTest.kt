@@ -72,6 +72,27 @@ class ProfilerTest {
     }
 
     @Test
+    fun `keeps the first output seen for each form of a step`() {
+        val profiler = Profiler()
+        val checkpoints = listOf(
+            checkpoint("classify", null, "support", null),
+            checkpoint("classify", null, "sales", null),
+            checkpoint("classify", null, "**feedback**", null),
+            checkpoint("classify", null, "**sales**", null),
+        )
+
+        val profile = profiler.profile(Version("1.0"), checkpoints)
+
+        assertEquals(
+            mapOf(
+                OutputForm(STRING, false) to "support",
+                OutputForm(MARKDOWN, false) to "**feedback**",
+            ),
+            profile.stepExamples[Step("classify")]
+        )
+    }
+
+    @Test
     fun `steps with no nextStep have no transitions`() {
         val profiler = Profiler()
         val checkpoints = listOf(checkpoint("final-step", null, "done", null))

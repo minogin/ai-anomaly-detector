@@ -21,9 +21,9 @@ The image is rendered by the demo itself (`./gradlew -q :demo:screenshots`) at s
 The other two reports show a JSON field being nested inside a new object (1.2), and a branch of the workflow silently disappearing (1.3). One version at a time:
 
 ```
-./gradlew -q :demo:record -Pv=1.0    # baseline
-./gradlew -q :demo:record -Pv=1.1    # drifted
-./gradlew -q :demo:diff -Pv=1.1      # report 1.1 against 1.0
+./gradlew -q :demo:record-1.0    # baseline
+./gradlew -q :demo:record-1.1    # drifted
+./gradlew -q :demo:diff-1.1      # report 1.1 against 1.0
 ```
 
 The demo lives in [`demo/`](demo/src/main/kotlin/com/minogin/anomaly/demo). Everything in it is invented: the workflow, the messages, the model's answers.

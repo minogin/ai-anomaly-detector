@@ -30,16 +30,25 @@ fun JavaExec.demoRun(vararg arguments: String) {
     args(*arguments)
 }
 
-// ./gradlew -q :demo:record -Pv=1.1
-tasks.register<JavaExec>("record") {
-    description = "Run the synthetic workflow as version -Pv (default 1.0) and record its checkpoints"
-    demoRun("record", (project.findProperty("v") ?: "1.0").toString())
+// One task per version rather than a -Pv=1.1 property: PowerShell splits "-Pv=1.1" at the dot
+// and Gradle then looks for a task named ".1". Must match ScriptedModel.VERSIONS.
+val baseline = "1.0"
+val versions = listOf("1.0", "1.1", "1.2", "1.3")
+
+// ./gradlew -q :demo:record-1.1
+versions.forEach { version ->
+    tasks.register<JavaExec>("record-$version") {
+        description = "Run the synthetic workflow as version $version and record its checkpoints"
+        demoRun("record", version)
+    }
 }
 
-// ./gradlew -q :demo:diff -Pv=1.1
-tasks.register<JavaExec>("diff") {
-    description = "Compare recorded version -Pv (default 1.1) against the 1.0 baseline"
-    demoRun("diff", (project.findProperty("v") ?: "1.1").toString(), "1.0")
+// ./gradlew -q :demo:diff-1.1
+versions.filter { it != baseline }.forEach { version ->
+    tasks.register<JavaExec>("diff-$version") {
+        description = "Compare recorded version $version against the $baseline baseline"
+        demoRun("diff", version, baseline)
+    }
 }
 
 // ./gradlew -q demo

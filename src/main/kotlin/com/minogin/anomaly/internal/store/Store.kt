@@ -28,7 +28,7 @@ internal class Store(
         val path = samplesPath(version)
 
         if (!Files.exists(path)) {
-            throw IllegalStateException("No data for version '$version' — run the app with currentVersion=\"$version\" first")
+            throw IllegalStateException("No data for version '$version', run the app with currentVersion=\"$version\" first")
         }
 
         return Files.readAllLines(path)

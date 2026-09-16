@@ -31,7 +31,7 @@ class PrinterTest {
         val out = capture { Printer().printReport(report()) }
         assertEquals(
             """
-            Anomaly Detector: 1.0 → 1.1
+            Anomaly Detector: 1.0 -> 1.1
             ==================================================
             No findings.
 
@@ -91,7 +91,7 @@ class PrinterTest {
               Current:   JSON_OBJECT {reply=STRING, offer={discount=INTEGER}, valid=STRING}
               Added:     offer: {discount=INTEGER}
               Removed:   discount: INTEGER
-              Changed:   valid: BOOLEAN → STRING
+              Changed:   valid: BOOLEAN -> STRING
             """.trimIndent()
         )
     }
@@ -179,7 +179,7 @@ class PrinterTest {
             """
             PROFILE (1.1)
 
-              classify-query: STRING → handle-feedback, handle-sales, handle-support
+              classify-query: STRING -> handle-feedback, handle-sales, handle-support
               summarize: STRING
 
             """.trimIndent(),

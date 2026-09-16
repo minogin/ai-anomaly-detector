@@ -23,7 +23,7 @@ internal class Printer {
         }
 
     fun printReport(report: Report) {
-        println("Anomaly Detector: ${report.referenceVersion} → ${report.currentVersion}")
+        println("Anomaly Detector: ${report.referenceVersion} -> ${report.currentVersion}")
         println("=".repeat(50))
         if (report.findings.isEmpty()) {
             println("No findings.")
@@ -79,7 +79,7 @@ internal class Printer {
         profile.steps.sortedBy { it.name }.forEach { step ->
             val forms = profile.stepOutputForms[step]?.joinToString { formatForm(it) } ?: "-"
             val transitions = profile.stepTransitions[step]?.map { it.name }?.sorted()?.joinToString()
-            val transitionStr = if (transitions != null) " → $transitions" else ""
+            val transitionStr = if (transitions != null) " -> $transitions" else ""
             println("  ${step.name}: $forms$transitionStr")
         }
     }
@@ -100,7 +100,7 @@ internal class Printer {
             if (schemaDiff.removed.isNotEmpty())
                 println("  Removed:   ${schemaDiff.removed.entries.joinToString { (path, schema) -> "$path: ${schema.format()}" }}")
             if (schemaDiff.changed.isNotEmpty())
-                println("  Changed:   ${schemaDiff.changed.entries.joinToString { (path, change) -> "$path: ${change.first.format()} → ${change.second.format()}" }}")
+                println("  Changed:   ${schemaDiff.changed.entries.joinToString { (path, change) -> "$path: ${change.first.format()} -> ${change.second.format()}" }}")
         }
     }
 

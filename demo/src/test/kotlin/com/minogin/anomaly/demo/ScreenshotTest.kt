@@ -11,8 +11,8 @@ class ScreenshotTest {
     fun `renders text to a dark png sized to the content`(@TempDir dir: Path) {
         val short = dir.resolve("short.png")
         val long = dir.resolve("long.png")
-        Screenshot.render("Anomaly Detector: 1.0 → 1.1\n[HIGH] one line", short)
-        Screenshot.render("Anomaly Detector: 1.0 → 1.1\n[HIGH] one line\n[MID] a much longer second line of text\n\nPROFILE", long)
+        Screenshot.render("Anomaly Detector: 1.0 -> 1.1\n[HIGH] one line", short)
+        Screenshot.render("Anomaly Detector: 1.0 -> 1.1\n[HIGH] one line\n[MID] a much longer second line of text\n\nPROFILE", long)
 
         val shortImage = ImageIO.read(short.toFile())
         val longImage = ImageIO.read(long.toFile())

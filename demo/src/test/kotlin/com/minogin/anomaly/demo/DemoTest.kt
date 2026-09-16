@@ -108,5 +108,8 @@ class DemoTest {
         assertFalse(out.contains(dir.toString()), "report leaks the data directory")
         assertFalse(out.contains(System.getProperty("user.name")), "report leaks the user name")
         assertFalse(Regex("""\d{4}-\d{2}-\d{2}""").containsMatchIn(out), "report contains a date")
+        // Windows consoles that are not in UTF-8 mode garble anything outside ASCII, so the report must stay plain.
+        val nonAscii = out.filter { it.code > 127 }.toSet()
+        assertTrue(nonAscii.isEmpty(), "report contains non-ASCII characters: $nonAscii")
     }
 }

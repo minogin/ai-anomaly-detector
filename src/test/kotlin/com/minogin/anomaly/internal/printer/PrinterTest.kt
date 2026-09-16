@@ -1,6 +1,7 @@
 package com.minogin.anomaly.internal.printer
 
 import com.minogin.anomaly.internal.analyzer.model.*
+import com.minogin.anomaly.internal.common.model.*
 import com.minogin.anomaly.internal.profiler.model.*
 import com.minogin.anomaly.internal.profiler.model.JsonSchema.Primitive.*
 import org.junit.jupiter.api.Test
@@ -159,6 +160,30 @@ class PrinterTest {
                 "[LOW] New step: 'extra'",
             ),
             headers
+        )
+    }
+
+    @Test
+    fun `profile lists steps and their targets sorted by name`() {
+        val string = OutputForm(OutputForm.Type.STRING, false)
+        val profile = Profile(
+            version = Version("1.1"),
+            steps = setOf(Step("summarize"), Step("classify-query")),
+            stepOutputForms = mapOf(Step("summarize") to setOf(string), Step("classify-query") to setOf(string)),
+            stepTransitionCounts = mapOf(
+                Step("classify-query") to linkedMapOf(Step("handle-support") to 6, Step("handle-feedback") to 2, Step("handle-sales") to 2)
+            ),
+        )
+        val out = capture { Printer().printProfile("1.1", profile) }
+        assertEquals(
+            """
+            PROFILE (1.1)
+
+              classify-query: STRING → handle-feedback, handle-sales, handle-support
+              summarize: STRING
+
+            """.trimIndent(),
+            out
         )
     }
 

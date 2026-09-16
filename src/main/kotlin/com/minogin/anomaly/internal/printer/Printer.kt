@@ -78,7 +78,7 @@ internal class Printer {
         println()
         profile.steps.sortedBy { it.name }.forEach { step ->
             val forms = profile.stepOutputForms[step]?.joinToString { formatForm(it) } ?: "-"
-            val transitions = profile.stepTransitions[step]?.joinToString { it.name }
+            val transitions = profile.stepTransitions[step]?.map { it.name }?.sorted()?.joinToString()
             val transitionStr = if (transitions != null) " → $transitions" else ""
             println("  ${step.name}: $forms$transitionStr")
         }

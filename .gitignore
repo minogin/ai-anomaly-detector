@@ -43,3 +43,5 @@ bin/
 .DS_Store
 
 .ai-workflows
+# recorded demo checkpoints
+.ai-anomaly-detector/

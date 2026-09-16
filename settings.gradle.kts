@@ -3,3 +3,4 @@ plugins {
 }
 
 rootProject.name = "anomaly-detector"
+include("demo")

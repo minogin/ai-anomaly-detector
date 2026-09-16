@@ -47,3 +47,9 @@ tasks.register<JavaExec>("demo") {
     description = "Record all demo versions and print every drift report against the baseline"
     demoRun("all")
 }
+
+// ./gradlew -q :demo:screenshots   -> docs/demo-report-<version>.png
+tasks.register<JavaExec>("screenshots") {
+    description = "Render every drift report as a PNG for slides into docs/"
+    demoRun("screenshots", rootProject.layout.projectDirectory.dir("docs").asFile.absolutePath)
+}

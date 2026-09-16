@@ -5,7 +5,6 @@ import com.minogin.anomaly.internal.analyzer.model.*
 import com.minogin.anomaly.internal.profiler.model.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.*
-import java.io.*
 import java.nio.file.*
 import kotlin.test.*
 
@@ -102,26 +101,12 @@ class DemoTest {
     @Test
     fun `printed reports fit a projector and contain nothing identifying`(@TempDir dir: Path) {
         ScriptedModel.VERSIONS.forEach { record(dir.toString(), it) }
-        val out = capture {
-            ScriptedModel.DRIFT_DESCRIPTIONS.keys.forEach { diff(dir.toString(), it, BASELINE) }
-        }
+        val out = ScriptedModel.DRIFT_DESCRIPTIONS.keys.joinToString("\n") { diffText(dir.toString(), it, BASELINE) }
 
         val tooLong = out.lines().filter { it.length > 100 }
         assertTrue(tooLong.isEmpty(), "Lines over 100 columns:\n${tooLong.joinToString("\n")}")
         assertFalse(out.contains(dir.toString()), "report leaks the data directory")
         assertFalse(out.contains(System.getProperty("user.name")), "report leaks the user name")
         assertFalse(Regex("""\d{4}-\d{2}-\d{2}""").containsMatchIn(out), "report contains a date")
-    }
-
-    private fun capture(block: () -> Unit): String {
-        val original = System.out
-        val buffer = ByteArrayOutputStream()
-        System.setOut(PrintStream(buffer, true, Charsets.UTF_8))
-        try {
-            block()
-        } finally {
-            System.setOut(original)
-        }
-        return buffer.toString(Charsets.UTF_8)
     }
 }

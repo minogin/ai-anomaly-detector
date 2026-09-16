@@ -14,7 +14,9 @@ cd ai-anomaly-detector
 
 This runs a small synthetic customer-chat workflow with a scripted stand-in for the model, records four versions of it, and prints one drift report per changed version. In the first report, version 1.1, the router started answering `**feedback**` instead of `feedback` for some messages. The parser did not recognise the bold form and quietly fell back to the support branch:
 
-![Drift report for demo version 1.1](docs/demo-report-1.1.png)
+<img src="docs/demo-report-1.1.png" alt="Drift report for demo version 1.1" width="720">
+
+The image is rendered by the demo itself (`./gradlew -q :demo:screenshots`) at slide resolution; the terminal output is the same text.
 
 The other two reports show a JSON field being nested inside a new object (1.2), and a branch of the workflow silently disappearing (1.3). One version at a time:
 

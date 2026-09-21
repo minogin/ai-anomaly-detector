@@ -62,9 +62,14 @@ cp.nextStep(handler)
 ```
 
 The detector never calls your model and never sees your routing logic; it only records what you
-report. Steps that do not route skip line 4. `nextStep` means "the workflow decided to go there",
-not "the next step completed". The handle refers to its own checkpoint, so one detector can be
-shared by requests running in parallel.
+report. `nextStep` means "the workflow decided to go there", not "the next step completed". The
+handle refers to its own checkpoint, so one detector can be shared by requests running in parallel.
+
+Call `nextStep` wherever your code branches on a model's answer. Without it the routing findings
+(transitions changed, routing distribution changed) have no data for that step and stay silent; the
+other findings are unaffected. A step that always continues to the same place can skip it, since
+nothing there can drift. Per step, call it always or never: recording routing in one version and not
+in the other reports every target as removed.
 
 Checkpoints are written to disk immediately after each call, one file per version. Run your app as version `1.0` to record a baseline, then bump to `1.1` and run again. Compare with the CLI:
 
@@ -160,7 +165,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.minogin:ai-anomaly-detector:0.3.0")
+    implementation("com.github.minogin:ai-anomaly-detector:0.3.1")
 }
 ```
 
@@ -172,7 +177,7 @@ Or build it yourself and publish to your local Maven repository:
 
 ```kotlin
 dependencies {
-    implementation("com.minogin:anomaly-detector:0.3.0")
+    implementation("com.minogin:anomaly-detector:0.3.1")
 }
 ```
 

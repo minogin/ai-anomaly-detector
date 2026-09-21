@@ -48,14 +48,23 @@ val detector = AnomalyDetector(
     currentVersion = "1.1",
 )
 
-// wrap LLM calls
-val response = llm.call(prompt)
-detector.checkpoint(step = "classify-query", input = prompt, output = response.content)
+// 1. your code calls the model, as it does today
+val answer = llm.call(routerPrompt, message)
 
-// record which branch the app actually took
-val handler = route(response.content)
-detector.nextStep(step = "classify-query", nextStep = handler)
+// 2. tell the detector what came back
+val cp = detector.checkpoint(step = "classify-query", input = message, output = answer)
+
+// 3. your code decides where to go, as it does today
+val handler = route(answer)
+
+// 4. tell the detector where it went
+cp.nextStep(handler)
 ```
+
+The detector never calls your model and never sees your routing logic; it only records what you
+report. Steps that do not route skip line 4. `nextStep` means "the workflow decided to go there",
+not "the next step completed". The handle refers to its own checkpoint, so one detector can be
+shared by requests running in parallel.
 
 Checkpoints are written to disk immediately after each call, one file per version. Run your app as version `1.0` to record a baseline, then bump to `1.1` and run again. Compare with the CLI:
 
@@ -174,6 +183,7 @@ The standalone CLI jar is built with `./gradlew cliJar` and lands in `build/libs
 - Not an agent framework. No workflow restructuring required, just checkpoints around your model calls.
 - Not a correctness judge. It reports that something changed, not whether the change is good or bad.
 - Not a semantic analyser. Structural and routing drift only; the meaning of the text is never inspected.
+- Not an error monitor. A checkpoint is written after the model call returns, so a call that throws or times out leaves no trace here. Those failures are loud already; keep your normal error tracking for them. One consequence: a step that always crashes and a step that is never reached both show up as "step missing".
 - Not useful on the first run. It compares two recorded versions, so there is nothing to report until a baseline exists.
 - Not a statistics tool. The routing check needs a handful of samples per version and is skipped below that, so a step visited twice a day will only ever get the yes/no findings.
 

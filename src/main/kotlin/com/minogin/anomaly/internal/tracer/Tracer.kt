@@ -31,8 +31,5 @@ internal class Tracer(
         return cp
     }
 
-    fun setNextStep(step: Step, nextStep: Step): Checkpoint? =
-        checkpoints.updateLast({ it.step == step }) { it.copy(nextStep = nextStep) }
-
     fun checkpoints(): List<Checkpoint> = checkpoints.snapshot()
 }

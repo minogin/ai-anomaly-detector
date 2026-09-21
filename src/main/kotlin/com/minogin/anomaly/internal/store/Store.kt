@@ -11,17 +11,19 @@ internal class Store(
 ) {
     companion object {
         private val objectMapper = jacksonObjectMapper()
+
+        /** One lock for all stores: two detectors in one process may write the same file. */
+        private val writeLock = Any()
     }
 
     fun append(version: Version, checkpoint: Checkpoint) {
         val path = samplesPath(version)
-        Files.createDirectories(path.parent)
-        Files.writeString(
-            path,
-            objectMapper.writeValueAsString(checkpoint) + "\n",
-            StandardOpenOption.CREATE,
-            StandardOpenOption.APPEND
-        )
+        val line = objectMapper.writeValueAsString(checkpoint) + "\n"
+        // Requests running in parallel must not interleave their lines.
+        synchronized(writeLock) {
+            Files.createDirectories(path.parent)
+            Files.writeString(path, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+        }
     }
 
     fun load(version: Version): List<Checkpoint> {

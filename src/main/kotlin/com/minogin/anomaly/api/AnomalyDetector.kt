@@ -22,23 +22,28 @@ class AnomalyDetector @JvmOverloads constructor(
     private val profiler = Profiler()
     private val analyzer = Analyzer(config)
 
+    /**
+     * Records one model call: call it right after the model returned, with what went in and what
+     * came out. If the workflow then routes somewhere, report that on the returned handle:
+     *
+     * ```
+     * val cp = detector.checkpoint(step = "classify-query", input = message, output = answer)
+     * cp.nextStep(handler)
+     * ```
+     */
     fun checkpoint(
         step: String,
         input: String,
         output: String,
-        nextStep: String? = null
-    ) {
+    ): CheckpointHandle {
         val cp = tracer.checkpoint(
             step = Step(step),
             input = input,
             output = output,
-            nextStep = nextStep?.let { Step(it) },
         )
         store.append(currentVersion, cp)
-    }
-
-    fun nextStep(step: String, nextStep: String) {
-        tracer.setNextStep(Step(step), Step(nextStep))?.let { store.append(currentVersion, it) }
+        // The store keeps the last record per checkpoint id, so the routing is an appended update.
+        return CheckpointHandle { nextStep -> store.append(currentVersion, cp.copy(nextStep = Step(nextStep))) }
     }
 
     fun report(referenceVersion: String): Report {

@@ -14,7 +14,7 @@ class Workflow(
 ) {
     fun run(conversation: Conversation) {
         val category = model.classify(conversation)
-        detector.checkpoint(step = "classify-query", input = conversation.message, output = category)
+        val routerCheckpoint = detector.checkpoint(step = "classify-query", input = conversation.message, output = category)
 
         val handler = when (category) {
             "support" -> "handle-support"
@@ -22,10 +22,10 @@ class Workflow(
             "feedback" -> "handle-feedback"
             else -> "handle-support" // fallback: anything unrecognised is treated as a support request
         }
-        detector.nextStep(step = "classify-query", nextStep = handler)
+        routerCheckpoint.nextStep(handler)
 
         val reply = model.handle(handler, conversation)
-        detector.checkpoint(step = handler, input = conversation.message, output = reply, nextStep = "summarize")
+        detector.checkpoint(step = handler, input = conversation.message, output = reply).nextStep("summarize")
 
         val summary = model.summarize(handler, conversation)
         detector.checkpoint(step = "summarize", input = reply, output = summary)

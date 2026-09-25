@@ -32,7 +32,7 @@ The demo lives in [`demo/`](demo/src/main/kotlin/com/minogin/anomaly/demo). Ever
 
 AI workflows can silently break when you change a prompt, model, or code. The output may still look reasonable to a human, but its structure or behaviour has changed. A JSON object becomes a quoted string, a field gets added or removed, a classifier starts returning markdown instead of a bare word, a router sends traffic somewhere else. Downstream code that parses these outputs then breaks without an obvious error, or keeps running with the wrong branch.
 
-Real examples confirmed by developers:
+Typical examples of the kind of change it looks for:
 
 - `{"riskLevel":"HIGH"}` became `"{\"riskLevel\":\"HIGH\"}"` (JSON got quoted)
 - `APPROVE` became `**APPROVE**` (bare word became markdown bold)
@@ -194,4 +194,4 @@ The standalone CLI jar is built with `./gradlew cliJar` and lands in `build/libs
 
 ## Status
 
-Early prototype (0.3.x). Core detection works and has caught real bugs. The demo above is the recommended way to see what a report looks like before instrumenting your own workflow.
+Early prototype (0.3.x). It was built after a real incident of the `feedback` to `**feedback**` kind, but it has not run in production yet, so it has not caught anything outside its own tests and the demo. The demo above is the recommended way to see what a report looks like before instrumenting your own workflow.

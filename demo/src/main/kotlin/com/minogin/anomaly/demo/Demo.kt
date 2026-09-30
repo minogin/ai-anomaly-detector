@@ -36,10 +36,13 @@ fun diffText(basePath: String, currentVersion: String, referenceVersion: String)
     return buffer.toString(Charsets.UTF_8)
 }
 
-/** Records every version and renders one PNG per drifted version into [outputDir]. */
+/**
+ * Records every version and renders one report PNG per version into [outputDir]. The baseline is
+ * compared with itself: no findings, but its profile, which the slides show as the starting point.
+ */
 fun screenshots(basePath: String, outputDir: Path) {
     ScriptedModel.VERSIONS.forEach { record(basePath, it) }
-    ScriptedModel.DRIFT_DESCRIPTIONS.keys.forEach { version ->
+    (listOf(BASELINE) + ScriptedModel.DRIFT_DESCRIPTIONS.keys).forEach { version ->
         val output = outputDir.resolve("demo-report-$version.png")
         Screenshot.render(diffText(basePath, version, BASELINE), output)
         println("Rendered $output")
@@ -80,7 +83,7 @@ private fun run(args: Array<String>) {
                   demo record <version>            record one version (${ScriptedModel.VERSIONS.joinToString()})
                   demo diff <current> [reference]  print the drift report (reference defaults to $BASELINE)
                   demo all                         record every version and print all reports
-                  demo screenshots <dir>           record every version and render each report as a PNG
+                  demo screenshots <dir>           record every version and render each report, baseline included, as a PNG
                 """.trimIndent()
             )
             exitProcess(1)

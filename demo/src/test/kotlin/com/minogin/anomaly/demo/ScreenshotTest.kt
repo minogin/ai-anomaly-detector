@@ -22,12 +22,13 @@ class ScreenshotTest {
     }
 
     @Test
-    fun `screenshots renders one png per drifted version`(@TempDir dir: Path) {
+    fun `screenshots renders one png per version, baseline included`(@TempDir dir: Path) {
         val out = dir.resolve("out")
         screenshots(dir.resolve("data").toString(), out)
 
         val files = Files.list(out).use { it.map { p -> p.fileName.toString() }.sorted().toList() }
-        assertEquals(ScriptedModel.DRIFT_DESCRIPTIONS.keys.map { "demo-report-$it.png" }.sorted(), files)
+        val expected = ScriptedModel.DRIFT_DESCRIPTIONS.keys.map { "demo-report-$it.png" } + "demo-report-$BASELINE.png"
+        assertEquals(expected.sorted(), files)
         files.forEach { assertNotNull(ImageIO.read(out.resolve(it).toFile()), "$it is a readable image") }
     }
 

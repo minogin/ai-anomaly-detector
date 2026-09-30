@@ -16,7 +16,7 @@ This runs a small synthetic customer-chat workflow with a scripted stand-in for 
 
 <img src="docs/demo-report-1.1.png" alt="Drift report for demo version 1.1" width="720">
 
-The image is rendered by the demo itself (`./gradlew -q :demo:screenshots`) at slide resolution; the terminal output is the same text.
+The image is rendered by the demo itself (`./gradlew -q :demo:screenshots`) at slide resolution; the terminal output is the same text. The same task writes the other reports and `docs/demo-report-1.0.png`, the baseline compared with itself, which shows its profile.
 
 The other two reports show a JSON field being nested inside a new object (1.2), and a branch of the workflow silently disappearing (1.3). One version at a time:
 
